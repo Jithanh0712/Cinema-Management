@@ -1,0 +1,217 @@
+CREATE DATABASE RAPCHIEUPHIM;
+GO 
+
+USE RAPCHIEUPHIM;
+GO 
+
+CREATE TABLE TAIKHOAN(
+    MaTaiKhoan CHAR(10) PRIMARY KEY,
+    TaiKhoan VARCHAR(255) NOT NULL,
+    MatKhau VARCHAR(255) NOT NULL,
+    PhanQuyen VARCHAR(50) CHECK (PhanQuyen = 'NhanVien' or PhanQuyen = 'KhachHang' or PhanQuyen = 'QuanLy')
+);
+GO 
+-- Tạo bảng PHIM
+CREATE TABLE PHIM (
+    MaPhim CHAR(10) PRIMARY KEY,
+    TenPhim NVARCHAR(30) NOT NULL,
+    DaoDien NVARCHAR(30) NOT NULL,
+    NhaSX NVARCHAR(30) NOT NULL,
+    NamSX INT NOT NULL CHECK (NamSX > 0 AND NamSX <= DATEPART(YEAR, GETDATE())),
+    HinhThuc NVARCHAR(20) CHECK (HinhThuc IN (N'Phụ đề', N'Lồng tiếng')) NOT NULL,
+    DinhDang VARCHAR(2) CHECK (DinhDang IN ('2D', '3D')) NOT NULL,
+    DanhGia FLOAT CHECK (DanhGia >= 0 AND DanhGia <= 10) DEFAULT 0,
+    XepLoai VARCHAR(5) CHECK (XepLoai IN ('PG', 'U', '12A', '12', '15', '18', 'R18')) NOT NULL,
+    DoDai INT NOT NULL,
+    MoTa TEXT NOT NULL,
+    HinhAnh VARBINARY(MAX) NOT NULL
+);
+GO 
+
+-- Tạo bảng DIENVIEN
+CREATE TABLE DIENVIEN (
+    MaDV CHAR(10) PRIMARY KEY,
+    TenDV NVARCHAR(30) NOT NULL
+);
+GO 
+
+-- Tạo bảng THAMGIA
+CREATE TABLE THAMGIA (
+    MaDV CHAR(10),
+    MaPhim CHAR(10),
+    VaiTro NVARCHAR(50) NOT NULL,
+    PRIMARY KEY (MaDV, MaPhim),
+    FOREIGN KEY (MaDV) REFERENCES DIENVIEN(MaDV) ON DELETE CASCADE,
+    FOREIGN KEY (MaPhim) REFERENCES PHIM(MaPhim) ON DELETE CASCADE
+);
+GO 
+
+-- Tạo bảng THELOAIPHIM
+CREATE TABLE THELOAIPHIM (
+    MaPhim CHAR(10),
+    TheLoai NVARCHAR(20),
+    PRIMARY KEY (MaPhim, TheLoai),
+	FOREIGN KEY (MaPhim) REFERENCES PHIM(MaPhim) ON DELETE CASCADE
+);
+GO 
+
+-- Tạo bảng PHONGCHIEU
+CREATE TABLE PHONGCHIEU (
+    MaPhong CHAR(10) PRIMARY KEY,
+    SLGheVIP INT CHECK (SLGheVIP > 0 AND SLGheVIP % 6 = 0),
+    SLGheThuong INT CHECK (SLGheThuong > 0 AND SLGheThuong % 5 = 0),
+    SLGheDoi INT CHECK (SLGheDoi > 0),
+    CONSTRAINT CK_GheRatio CHECK (SLGheThuong = SLGheVIP * 5 / 6),
+    CONSTRAINT CK_GheDoi CHECK (SLGheDoi <= SLGheVIP / 12)
+);
+GO 
+
+-- Tạo bảng LICHCHIEU
+CREATE TABLE LICHCHIEU (
+    MaLC CHAR(30) PRIMARY KEY,
+    ThoiGianChieu DATETIME NOT NULL,
+    ThoiGianHet DATETIME NOT NULL,
+    MaPhong CHAR(10) NOT NULL,
+    MaPhim CHAR(10) NOT NULL,
+    FOREIGN KEY (MaPhong) REFERENCES PHONGCHIEU(MaPhong),
+    FOREIGN KEY (MaPhim) REFERENCES PHIM(MaPhim) ON DELETE CASCADE
+);
+GO 
+
+-- Tạo bảng NHACUNGCAP
+CREATE TABLE NHACUNGCAP (
+    MaNCC CHAR(10) PRIMARY KEY,
+    TenNCC NVARCHAR(30) NOT NULL,
+    DiaChi NVARCHAR(50),
+    SDT VARCHAR(10) NOT NULL
+);
+GO 
+
+-- Tạo bảng HANGHOA
+CREATE TABLE HANGHOA (
+    MaHH CHAR(10) PRIMARY KEY,
+    TenHH NVARCHAR(30) NOT NULL,
+    DonGia FLOAT CHECK (DonGia > 0) NOT NULL,
+    SLTon INT CHECK (SLTon >= 0) NOT NULL,
+    NhaCC CHAR(10) NOT NULL,
+    FOREIGN KEY (NhaCC) REFERENCES NHACUNGCAP(MaNCC) ON DELETE CASCADE
+);
+GO 
+
+-- Tạo bảng NHANVIEN
+CREATE TABLE NHANVIEN (
+    MaNV CHAR(10) PRIMARY KEY,
+    HoTen NVARCHAR(30) NOT NULL,
+    DiaChi NVARCHAR(50),
+    NgaySinh DATE NOT NULL,
+    SDT VARCHAR(10) NOT NULL,
+    GioiTinh VARCHAR(10) CHECK (GioiTinh IN ('Nam', 'Nu')),
+    ChucVu VARCHAR(20) CHECK (ChucVu IN ('BanThoiGian', 'ToanThoiGian', 'QuanLy', 'ThoiVu')) NOT NULL,
+    MaTaiKhoan CHAR(10),
+    Luong FLOAT CHECK (Luong > 0),
+    FOREIGN KEY (MaTaiKhoan) REFERENCES TAIKHOAN(MaTaiKhoan)
+);
+GO 
+
+-- Tạo bảng KHACHHANG
+CREATE TABLE KHACHHANG (
+    MaKH CHAR(10) PRIMARY KEY,
+    HoTen NVARCHAR(30) NOT NULL,
+    DiaChi NVARCHAR(255),
+    GioiTinh NVARCHAR(10) CHECK (GioiTinh IN ('Nam', N'Nữ')),
+    NgaySinh DATE,
+    SDT VARCHAR(10) NOT NULL,
+    DiemTL INT DEFAULT 0,
+    LoaiKH VARCHAR(10) CHECK (LoaiKH IN ('Dong', 'Bac', 'Vang', 'KimCuong')) DEFAULT 'Dong',
+    MaTaiKhoan CHAR(10),
+    FOREIGN KEY (MaTaiKhoan) REFERENCES TAIKHOAN(MaTaiKhoan)
+);
+GO 
+
+-- Tạo bảng GIAMGIA
+CREATE TABLE GIAMGIA (
+    MaGG CHAR(10) PRIMARY KEY,
+    LoaiGG VARCHAR(20) NOT NULL,
+    MaHH CHAR(10) NOT NULL,
+    GiaTri INT,
+    NgayHet DATE NOT NULL,
+    DieuKien INT CHECK (DieuKien >= 0),
+    MaNQL CHAR(10) NOT NULL,
+    FOREIGN KEY (MaHH) REFERENCES HANGHOA(MaHH) ON DELETE CASCADE,
+    FOREIGN KEY (MaNQL) REFERENCES NHANVIEN(MaNV)
+);
+GO 
+
+-- Tạo bảng NHAN
+CREATE TABLE NHAN (
+    MaKH CHAR(10),
+    MaGG CHAR(10),
+    SL INT CHECK (SL > 0),
+    PRIMARY KEY (MaKH, MaGG),
+    FOREIGN KEY (MaKH) REFERENCES KHACHHANG(MaKH) ON DELETE CASCADE,
+    FOREIGN KEY (MaGG) REFERENCES GIAMGIA(MaGG) ON DELETE CASCADE
+);
+GO 
+
+-- Tạo bảng HOADON
+CREATE TABLE HOADON (
+    MaHD CHAR(10) PRIMARY KEY,
+    ThoiGian DATETIME CHECK (ThoiGian<dateadd(day,(1),getdate())) NOT NULL,
+    TongTien FLOAT CHECK (TongTien > 0) NOT NULL,
+    PhuongThucTT VARCHAR(20) CHECK (PhuongThucTT IN ('Momo', 'VNPay', 'TheNganHang', 'TienMat', 'ZaloPay')) NOT NULL,
+    MaKH CHAR(10),
+    MaNV CHAR(10),
+    MaGG CHAR(10),
+    FOREIGN KEY (MaKH) REFERENCES KHACHHANG(MaKH) ON DELETE SET NULL, 
+    FOREIGN KEY (MaNV) REFERENCES NHANVIEN(MaNV) ON DELETE SET NULL,
+    FOREIGN KEY (MaGG) REFERENCES GIAMGIA(MaGG) ON DELETE SET NULL,
+);
+GO 
+
+-- Tạo bảng CHITIETHDHH
+CREATE TABLE CHITIETHDHH (
+    MaHD CHAR(10),
+    MaHH CHAR(10),
+    SL INT CHECK (SL > 0),
+    TongTien FLOAT NOT NULL,
+    PRIMARY KEY (MaHD, MaHH),
+    FOREIGN KEY (MaHD) REFERENCES HOADON(MaHD) ON DELETE CASCADE,
+    FOREIGN KEY (MaHH) REFERENCES HANGHOA(MaHH)
+);
+GO 
+
+-- Tạo bảng VE
+CREATE TABLE VE (
+    MaVe CHAR(36) PRIMARY KEY,
+    LoaiVe VARCHAR(10) CHECK (LoaiVe IN ('Vip', 'Thuong', 'Doi')) NOT NULL,
+    Gia FLOAT NOT NULL,
+    MaLC CHAR(30),
+    MaHD CHAR(10),
+    TrangThai BIT DEFAULT 0,
+    FOREIGN KEY (MaLC) REFERENCES LICHCHIEU(MaLC) ON DELETE CASCADE,
+    FOREIGN KEY (MaHD) REFERENCES HOADON(MaHD)
+);
+GO 
+
+---------------CONSTRAINTS------------------------------------------------
+
+-- Thêm hằng số CHECK cho tuổi và ngày sinh của nhân viên
+ALTER TABLE NHANVIEN
+ADD CONSTRAINT CheckTuoiNhanVien
+CHECK (
+    (
+        YEAR(GETDATE()) - YEAR(NgaySinh) > 18
+    )
+    OR
+    (
+        YEAR(GETDATE()) - YEAR(NgaySinh) = 18
+        AND MONTH(GETDATE()) > MONTH(NgaySinh)
+    )
+    OR
+    (
+        YEAR(GETDATE()) - YEAR(NgaySinh) = 18
+        AND MONTH(GETDATE()) = MONTH(NgaySinh)
+        AND DAY(GETDATE()) >= DAY(NgaySinh)
+    )
+);
+GO 
