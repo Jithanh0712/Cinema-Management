@@ -15,7 +15,7 @@ namespace RapChieuPhim.SourceCode
         SqlCommand comm = null;
         SqlDataAdapter da = null;
         public DBMain()
-        {
+        {      
             if (FormDangNhap.nguoiDung != null)
             { 
                 ConnStr = $"Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=RAPCHIEUPHIM;User ID={FormDangNhap.nguoiDung.TaiKhoanLogin}" +
